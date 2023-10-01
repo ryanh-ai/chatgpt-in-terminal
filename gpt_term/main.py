@@ -63,6 +63,8 @@ remote_version = None
 local_version = parse_version(__version__)
 threadlock_remote_version = threading.Lock()
 
+_local_proxy_host_base = os.getenv('LITELLM_API_BASE')
+default_api_base = "https://api.openai.com"
 
 class ChatMode:
     raw_mode = False
@@ -100,8 +102,9 @@ class ChatMode:
 class ChatGPT:
     def __init__(self, api_key: str, timeout: float):
         self.api_key = api_key
-        self.host = "https://api.openai.com"
+        self.host = default_api_base
         self.endpoint = self.host + "/v1/chat/completions"
+        self.endpoint = self.host + "/chat/completions"
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -528,6 +531,7 @@ class ChatGPT:
 
     def set_model(self, new_model: str):
         old_model = self.model
+        old_host = self.host
         if not new_model:
             console.print(
                 _("gpt_term.model_set"),old_model=old_model)
@@ -535,12 +539,19 @@ class ChatGPT:
         self.model = str(new_model)
         if "gpt-4-32k" in self.model:
             self.tokens_limit = 32768
+            self.set_host(default_api_base)
         elif "gpt-4" in self.model:
             self.tokens_limit = 8192
+            self.set_host(default_api_base)
         elif "gpt-3.5-turbo-16k" in self.model:
             self.tokens_limit = 16384
+            self.set_host(default_api_base)
         elif "gpt-3.5-turbo" in self.model:
             self.tokens_limit = 4096
+            self.set_host(default_api_base)
+        elif "local" in self.model:
+            self.tokens_limit = 100000
+            self.set_host(_local_proxy_host_base)
         else:
             self.tokens_limit = float('nan')
         console.print(
@@ -585,7 +596,8 @@ class CommandCompleter(Completer):
                 "gpt-3.5-turbo", 
                 "gpt-3.5-turbo-0613", 
                 "gpt-3.5-turbo-16k", 
-                "gpt-3.5-turbo-16k-0613"},
+                "gpt-3.5-turbo-16k-0613",
+                "local"},
             '/save': PathCompleter(file_filter=self.path_filter),
             '/system': None,
             '/rand': None,
