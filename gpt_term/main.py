@@ -99,9 +99,8 @@ class ChatMode:
 class ChatGPT:
     def __init__(self, api_key: str, timeout: float):
         self.api_key = api_key
-        self.host = "https://api.openai.com/"
+        self.host = "https://api.openai.com"
         self.endpoint = self.host + "/v1/chat/completions"
-        self.endpoint = self.host + "/chat/completions"
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -489,7 +488,11 @@ class ChatGPT:
     
     def set_host(self, host: str):
         self.host = host
-        self.endpoint = self.host + "/chat/completions"
+        #if api_key includes litellm, set endpoint to remove /v1/ from endpoint
+        if "litellm" in self.api_key:
+            self.endpoint = self.host + "/chat/completions"
+        else:
+            self.endpoint = self.host + "/v1/chat/completions"
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
