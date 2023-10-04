@@ -549,8 +549,16 @@ class ChatGPT:
             self.tokens_limit = 16384
         elif "gpt-3.5-turbo" in self.model:
             self.tokens_limit = 4096
-        elif "bedrock/anthropic.claude-v2" in self.model:
+        elif "bedrock/anthropic" in self.model:
             self.tokens_limit = 100000
+        elif "bedrock/cohere" in self.model:
+            self.tokens_limit = 4096
+        elif "bedrock/ai21" in self.model:
+            self.tokens_limit = 8192
+        elif "bedrock/amazon.text-express" in self.model:
+            self.tokens_limit = 8192
+        elif "bedrock/amazon.text-lite" in self.model:
+            self.tokens_limit = 4096
         else:
             self.tokens_limit = float('nan')
         console.print(
@@ -596,7 +604,16 @@ class CommandCompleter(Completer):
                 "gpt-3.5-turbo-0613", 
                 "gpt-3.5-turbo-16k", 
                 "gpt-3.5-turbo-16k-0613",
-                "bedrock/anthropic.claude-v2"},
+                "bedrock/anthropic.claude-v2",
+                "bedrock/anthropic.claude-v1",
+                "bedrock/anthropic.claude-instant-v1",
+                "bedrock/ai21.j2-mid-v1",
+                "bedrock/ai21.j2-ultra-v1",
+                "bedrock/amazon.titan-text-lite-v1",
+                "bedrock/amazon.titan-text-express-v1",
+                #"bedrock/amazon.titan-text-agile-v1",
+                "bedrock/cohere.command-text-v14",
+            },
             '/save': PathCompleter(file_filter=self.path_filter),
             '/system': None,
             '/rand': None,
