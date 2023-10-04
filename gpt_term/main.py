@@ -108,6 +108,9 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": f"You are a helpful assistant.\nKnowledge cutoff: 2021-09\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"}]
         self.model = 'gpt-3.5-turbo'
+        # add sensible default for bedrock
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters.html#model-parameters-titan
+        self.max_tokens_sampled = 2048
         self.tokens_limit = 4096
         # as default: gpt-3.5-turbo has a tokens limit as 4096
         # when model changes, tokens will also be changed
@@ -262,6 +265,8 @@ class ChatGPT:
                 "stream": ChatMode.stream_mode,
                 "temperature": self.temperature
             }
+            if 'bedrock/anthropic' or 'bedrock/amazon' in self.model:
+                data['max_tokens'] = self.max_tokens_sampled
             response = self.send_request(data)
             if response is None:
                 self.messages.pop()
