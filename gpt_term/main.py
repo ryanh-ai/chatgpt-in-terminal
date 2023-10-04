@@ -329,7 +329,7 @@ class ChatGPT:
         prompt = f'Generate title shorter than 10 words for the following content in content\'s language. The tilte contains ONLY words. DO NOT include line-break. \n\nContent: """\n{content}\n"""'
         messages = [{"role": "user", "content": prompt}]
         data = {
-            "model": "gpt-3.5-turbo",
+            "model": self.model,
             "messages": messages,
             "temperature": 0.5
         }
