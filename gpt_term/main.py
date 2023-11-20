@@ -185,7 +185,7 @@ class ChatGPT:
         client = sseclient.SSEClient(response)
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
-                rprint("[bold cyan]ChatGPT: ")
+                rprint("[bold cyan]AI: ")
                 for event in client.events():
                     if event.data == '[DONE]':
                         # finish_reason = part["choices"][0]['finish_reason']
@@ -691,7 +691,7 @@ def print_message(message: Dict[str, str]):
     if role == "user":
         print(f"> {content}")
     elif role == "assistant":
-        console.print("ChatGPT: ", end='', style="bold cyan")
+        console.print("AI: ", end='', style="bold cyan")
         if ChatMode.raw_mode:
             print(content)
         else:
@@ -1223,8 +1223,12 @@ def main():
 
     while True:
         try:
+            _host = chat_gpt.host.split('//')[1]
             message = session.prompt(
-                '> ', completer=command_completer, complete_while_typing=True, key_bindings=key_bindings)
+                f"\n{_host} --> {chat_gpt.model}\n > ",
+                completer=command_completer,
+                complete_while_typing=True,
+                key_bindings=key_bindings)
 
             if message.startswith('/'):
                 command = message.strip()
