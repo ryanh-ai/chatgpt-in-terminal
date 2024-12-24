@@ -596,22 +596,8 @@ class CommandCompleter(Completer):
             '/version': None,
             '/help': None,
             '/exit': None,
-            '/delete': {"first", "all"},
-            '/reset': None,
-            '/lang': {"zh_CN", "en", "jp", "de"},
-            '/version': None,
-            '/help': None,
-            '/exit': None,
         }
-        
-        # Get available models from ChatGPT instance if it exists
-        try:
-            from __main__ import chat_gpt
-            if chat_gpt and hasattr(chat_gpt, 'available_models'):
-                command_dict['/model'] = chat_gpt.available_models
-        except ImportError:
-            pass  # Use empty set if chat_gpt not available
-            
+
         self.nested_completer = NestedCompleter.from_nested_dict(command_dict)
 
     def path_filter(self, filename):
@@ -631,8 +617,6 @@ class CommandCompleter(Completer):
                     yield sub_cmd
 
 
-# Custom command completion to ensure completion continues after typing '/'
-command_completer = CommandCompleter()
 
 def count_token(messages: List[Dict[str, str]]):
     encoding = tiktoken.get_encoding("cl100k_base")
@@ -1148,6 +1132,10 @@ def main():
     
     if config.get("OPENAI_HOST"):
         chat_gpt.set_host(config.get("OPENAI_HOST"))
+
+    # Custom command completion to ensure completion continues after typing '/'
+    #AI! please pass chat_gpt to the command completer init, and then use get_available_models to set the model list
+    command_completer = CommandCompleter()
 
     if config.get("OPENAI_MODEL"):
         chat_gpt.set_model(config.get("OPENAI_MODEL"))
