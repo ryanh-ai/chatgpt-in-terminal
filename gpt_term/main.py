@@ -103,6 +103,7 @@ class ChatGPT:
         self.host = "https://api.openai.com"
         self.endpoint = self.host + "/v1/chat/completions"
         self.models_endpoint = self.host + "/v1/models"
+        #AI! change this to a class property that gets called on demand
         self.available_models = self.get_available_models()
         self.headers = {
             "Content-Type": "application/json",
