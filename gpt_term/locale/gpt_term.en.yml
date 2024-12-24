@@ -12,11 +12,11 @@ en:
   load_chat_history: "[dim]Chat history successfully loaded from: [deep_sky_blue3]%{load}"
   #
   code_not_found: "[dim]No code found"
-  code_too_many_found: "[dim]There are more than one code in ChatGPT's last reply"
+  code_too_many_found: "[dim]There are more than one code in AI's last reply"
   code_num: "[yellow]Code %{code_num}:"
   code_select: "Please select which code to copy: "
   code_index_must_int: "[red]Code index must be an Integer"
-  code_index_out_range_one: "[red]Index out of range: There is only one code in ChatGPT's last reply"
+  code_index_out_range_one: "[red]Index out of range: There is only one code in AI's last reply"
   code_index_out_range_many: "[red]Index out of range: You should input an Integer in range 1 ~%{len_code_list}"
   code_copy: "[dim]Code copied to Clipboard"
   code_last_copy: "[dim]Last reply copied to Clipboard"
@@ -49,7 +49,7 @@ en:
   multi_line_enabled: "[dim]Multi-line mode [green]enabled[/], press [[deep_sky_blue3]Esc[/]] + [[deep_sky_blue3]ENTER[/]] to submit."
   multi_line_disabled: "[dim]Multi-line mode [bright_red]disabled[/]."
   #
-  ChatGPT_thinking: "[bold cyan]ChatGPT is thinking..."
+  ChatGPT_thinking: "[bold cyan]AI is thinking..."
   #
   Aborted: "[bold cyan]Aborted."
   Error_message: "[red]Error: %{error_msg}"
@@ -108,7 +108,7 @@ en:
   upgrade_use_command: "Use `pip install --upgrade gpt-term` to upgrade."
   upgrade_see_git: "Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!"
   #
-  help_description: "Use ChatGPT in terminal"
+  help_description: "Use AI in terminal"
   help_help: "show this help message and exit"
   help_v: "show program's version number and exit"
   help_load: "Load chat history from file"
@@ -132,14 +132,14 @@ en:
   help_mean_command: "Do you mean `[deep_sky_blue3]%{most_similar_command}[/]`?"
   help_text: |
     [bold]Available commands:[/]
-      /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
+      /raw                     - Toggle raw mode (showing raw text of AI's reply)
       /multi                   - Toggle multi-line mode (allow multi-line input)
       /stream \[overflow_mode]  - Toggle stream output mode (flow print the answer)
       /tokens                  - Show the total tokens spent and the tokens for the current conversation
       /usage                   - Show total credits and current credits used
-      /last                    - Display last ChatGPT's reply
-      /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
-      /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
+      /last                    - Display last AI's reply
+      /copy (all)              - Copy the full AI's last reply (raw) to Clipboard
+      /copy code \[index]       - Copy the code in AI's last reply to Clipboard
       /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
       /model \[model_name]      - Change AI model
       /system \[new_prompt]     - Modify the system prompt
