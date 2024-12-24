@@ -572,8 +572,8 @@ class ChatGPT:
         console.print(_("gpt_term.temperature_set",temperature=temperature))
 
 class CommandCompleter(Completer):
-    def __init__(self):
-        # Initialize with basic command structure
+    def __init__(self, chat_gpt):
+        # Initialize with basic command structure and available models
         command_dict = {
             '/raw': None,
             '/multi': None,
@@ -582,7 +582,7 @@ class CommandCompleter(Completer):
             '/usage': None,
             '/last': None,
             '/copy': {"code", "all"},
-            '/model': set(),  # Will be populated with available models
+            '/model': chat_gpt.available_models,  # Use models from ChatGPT instance
             '/save': PathCompleter(file_filter=self.path_filter),
             '/system': None,
             '/rand': None,
@@ -1134,8 +1134,7 @@ def main():
         chat_gpt.set_host(config.get("OPENAI_HOST"))
 
     # Custom command completion to ensure completion continues after typing '/'
-    #AI! please pass chat_gpt to the command completer init, and then use get_available_models to set the model list
-    command_completer = CommandCompleter()
+    command_completer = CommandCompleter(chat_gpt)
 
     if config.get("OPENAI_MODEL"):
         chat_gpt.set_model(config.get("OPENAI_MODEL"))
