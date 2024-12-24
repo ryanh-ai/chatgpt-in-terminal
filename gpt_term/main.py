@@ -740,7 +740,7 @@ def get_levenshtein_distance(s1: str, s2: str):
     return v[s1_len][s2_len]
 
 
-def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
+def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str, command_completer: CommandCompleter):
     '''Handle slash (/) commands'''
     global _
     if command == '/raw':
@@ -1202,7 +1202,7 @@ def main():
             if message.startswith('/'):
                 command = message.strip()
                 handle_command(command, chat_gpt,
-                               key_bindings, chat_save_perfix)
+                               key_bindings, chat_save_perfix, command_completer)
             else:
                 if not message:
                     continue
