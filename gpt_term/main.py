@@ -103,8 +103,6 @@ class ChatGPT:
         self.host = "https://api.openai.com"
         self.endpoint = self.host + "/v1/chat/completions"
         self.models_endpoint = self.host + "/v1/models"
-        #AI! change this to a class property that gets called on demand
-        self.available_models = self.get_available_models()
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -458,7 +456,6 @@ class ChatGPT:
         else:
             self.endpoint = self.host + "/v1/chat/completions"
             self.models_endpoint = self.host + "/v1/models"
-        self.available_models = self.get_available_models()
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
@@ -493,9 +490,9 @@ class ChatGPT:
                 console.print(_("gpt_term.stream_overflow_visible"))
         else:
             console.print(_("gpt_term.stream_overflow_no_changed",old_overflow=old_overflow))
-        
 
-    def get_available_models(self) -> set:
+    @property
+    def available_models(self) -> set:
         """Fetch available models from the API"""
         try:
             response = self.send_get(self.models_endpoint)
@@ -574,6 +571,10 @@ class ChatGPT:
 
 class CommandCompleter(Completer):
     def __init__(self, chat_gpt):
+        self.chat_gpt = chat_gpt
+
+    @property
+    def nested_completer(self):
         # Initialize with basic command structure and available models
         command_dict = {
             '/raw': None,
@@ -583,7 +584,7 @@ class CommandCompleter(Completer):
             '/usage': None,
             '/last': None,
             '/copy': {"code", "all"},
-            '/model': chat_gpt.available_models,  # Use models from ChatGPT instance
+            '/model': self.chat_gpt.available_models,
             '/save': PathCompleter(file_filter=self.path_filter),
             '/system': None,
             '/rand': None,
@@ -598,8 +599,7 @@ class CommandCompleter(Completer):
             '/help': None,
             '/exit': None,
         }
-
-        self.nested_completer = NestedCompleter.from_nested_dict(command_dict)
+        return NestedCompleter.from_nested_dict(command_dict)
 
     def path_filter(self, filename):
         # Auto-complete paths, only complete json files and directories
