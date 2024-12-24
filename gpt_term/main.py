@@ -571,10 +571,10 @@ class ChatGPT:
         self.temperature = new_temperature
         console.print(_("gpt_term.temperature_set",temperature=temperature))
 
-#AI! please update this so that it gets available models from the `get_available_models` method we've built
 class CommandCompleter(Completer):
     def __init__(self):
-        self.nested_completer = NestedCompleter.from_nested_dict({
+        # Initialize with basic command structure
+        command_dict = {
             '/raw': None,
             '/multi': None,
             '/stream': {"visible", "ellipsis"},
@@ -582,38 +582,31 @@ class CommandCompleter(Completer):
             '/usage': None,
             '/last': None,
             '/copy': {"code", "all"},
-            '/model': {
-                #"gpt-4-1106-preview", 
-                #"gpt-4-vision-preview", 
-                #"gpt-4", 
-                #"gpt-4-0613", 
-                #"gpt-4-32k", 
-                #"gpt-4-32k-0613", 
-                "gpt-4o",
-                "gpt-4o-mini",
-                #"gpt-3.5-turbo-1106", 
-                #"gpt-3.5-turbo", 
-                #"gpt-3.5-turbo-0613", 
-                #"gpt-3.5-turbo-16k", 
-                #"gpt-3.5-turbo-16k-0613",
-                #"bedrock/anthropic.claude-v2",
-                "anthropic/claude-3-5-sonnet-20240620",
-                "anthropic.claude-3-5-sonnet-20241022-v2:0",
-                #"bedrock/anthropic.claude-3-opus-20240229-v1:0",
-                "bedrock/anthropic.claude-3-sonnet-20240229-v1:0",
-                "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
-                "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "bedrock/anthropic.claude-3-haiku-20240307-v1:0",
-                #"bedrock/anthropic.claude-v1",
-                #"bedrock/anthropic.claude-instant-v1",
-                #"bedrock/ai21.j2-mid-v1",
-                #"bedrock/ai21.j2-ultra-v1",
-                "bedrock/amazon.nova-lite-v1:0",
-                "bedrock/amazon.nova-pro-v1:0",
-                "bedrock/amazon.nova-micro-v1:0",
-                #"bedrock/cohere.command-text-v14",
-            },
+            '/model': set(),  # Will be populated with available models
             '/save': PathCompleter(file_filter=self.path_filter),
+            '/system': None,
+            '/rand': None,
+            '/temperature': None,
+            '/title': None,
+            '/timeout': None,
+            '/undo': None,
+            '/delete': {"first", "all"},
+            '/reset': None,
+            '/lang': {"zh_CN", "en", "jp", "de"},
+            '/version': None,
+            '/help': None,
+            '/exit': None,
+        }
+        
+        # Get available models from ChatGPT instance if it exists
+        try:
+            from __main__ import chat_gpt
+            if chat_gpt and hasattr(chat_gpt, 'available_models'):
+                command_dict['/model'] = chat_gpt.available_models
+        except ImportError:
+            pass  # Use empty set if chat_gpt not available
+            
+        self.nested_completer = NestedCompleter.from_nested_dict(command_dict)
             '/system': None,
             '/rand': None,
             '/temperature': None,
