@@ -1133,8 +1133,6 @@ def main():
     if config.get("OPENAI_HOST"):
         chat_gpt.set_host(config.get("OPENAI_HOST"))
 
-    # Custom command completion to ensure completion continues after typing '/'
-    command_completer = CommandCompleter(chat_gpt)
 
     if config.get("OPENAI_MODEL"):
         chat_gpt.set_model(config.get("OPENAI_MODEL"))
@@ -1151,6 +1149,9 @@ def main():
     if args.host:
         chat_gpt.set_host(args.host)
         console.print(_("gpt_term.host_set", new_host=args.host))
+
+    # Custom command completion to ensure completion continues after typing '/'
+    command_completer = CommandCompleter(chat_gpt)
 
     if args.model:
         chat_gpt.set_model(args.model)
