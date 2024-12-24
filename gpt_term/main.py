@@ -526,8 +526,10 @@ class ChatGPT:
             console.print(_("gpt_term.model_set"), old_model=old_model)
             return
         
-        # Allow setting any model if API didn't return available models
-        if self.available_models and new_model not in self.available_models:
+        # Allow any model if API didn't return models or if it's a known model type
+        if (self.available_models and 
+            new_model not in self.available_models and
+            not any(prefix in new_model for prefix in ['bedrock/', 'anthropic/', 'claude-'])):
             console.print(_("gpt_term.model_not_available"))
             return
             
