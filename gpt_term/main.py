@@ -47,7 +47,7 @@ if not config_path.exists():
     with config_path.open('w') as f:
         f.write(read_text('gpt_term', 'config.ini'))
 
-# 日志记录到 chat.log，注释下面这行可不记录日志
+# Log to chat.log, comment out this line to disable logging
 logging.basicConfig(filename=f'{data_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO)
 
@@ -56,7 +56,8 @@ log = logging.getLogger("chat")
 console = Console()
 
 style = Style.from_dict({
-    "prompt": "ansigreen",  # 将提示符设置为绿色
+    # Set prompt color to green
+    "prompt": "ansigreen",
 })
 
 remote_version = None
@@ -139,7 +140,7 @@ class ChatGPT:
             with console.status(_("gpt_term.ChatGPT_thinking")):
                 response = requests.post(
                     self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
-            # 匹配4xx错误，显示服务器返回的具体原因
+            # Match 4xx errors to show specific error message from server
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
                 console.print(_("gpt_term.Error_message",error_msg=error_msg))
@@ -219,7 +220,7 @@ class ChatGPT:
             question = self.messages[1]
             del self.messages[1]
             if self.messages[1]['role'] == "assistant":
-                # 如果第二个信息是回答才删除
+                # Delete if the second message is an answer
                 del self.messages[1]
             truncated_question = question['content'].split('\n')[0]
             if len(question['content']) > len(truncated_question):
@@ -399,7 +400,8 @@ class ChatGPT:
         try:
             response = requests.get(
                 url, headers=self.headers, timeout=self.timeout, params=params)
-        # 匹配4xx错误，显示服务器返回的具体原因
+
+            # Handle 4xx errors by displaying the specific reason returned by the server
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
                 console.print(_("gpt_term.Error_get_url",url=url,error_msg=error_msg))
@@ -600,28 +602,26 @@ class CommandCompleter(Completer):
         })
 
     def path_filter(self, filename):
-        # 路径自动补全，只补全json文件和文件夹
+        # Auto-complete paths, only complete json files and directories
         return filename.endswith(".json") or os.path.isdir(filename)
 
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
         if text.startswith('/'):
             for cmd in self.nested_completer.options.keys():
-                # 如果匹配到第一层命令
+                # If first level command matches
                 if text in cmd:
                     yield Completion(cmd, start_position=-len(text))
-            # 如果匹配到第n层命令
+            # If nth level command matches
             if ' ' in text:
                 for sub_cmd in self.nested_completer.get_completions(document, complete_event):
                     yield sub_cmd
 
 
-# 自定义命令补全，保证输入‘/’后继续显示补全
+# Custom command completion to ensure completion continues after typing '/'
 command_completer = CommandCompleter()
 
 def count_token(messages: List[Dict[str, str]]):
-    '''计算 messages 占用的 token
-    `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
     encoding = tiktoken.get_encoding("cl100k_base")
     length = 0
     for message in messages:
@@ -655,7 +655,6 @@ class FloatRangeValidator(Validator):
 temperature_validator = FloatRangeValidator(min_value=0.0, max_value=2.0)
 
 def print_message(message: Dict[str, str]):
-    '''打印单条来自 ChatGPT 或用户的消息'''
     role = message["role"]
     content = message["content"]
     if role == "user":
@@ -745,7 +744,7 @@ def get_levenshtein_distance(s1: str, s2: str):
 
 
 def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
-    '''处理斜杠(/)命令'''
+    '''Handle slash (/) commands'''
     global _
     if command == '/raw':
         ChatMode.toggle_raw_mode()
@@ -954,7 +953,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
 
 def load_chat_history(file_path):
-    '''从 file_path 加载聊天记录'''
+    '''Load chat history from file_path'''
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             chat_history = json.load(f)
@@ -967,7 +966,7 @@ def load_chat_history(file_path):
 
 
 def create_key_bindings():
-    '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式，以及单行模式下 `esc+Enter` 换行'''
+    '''Custom Enter key binding to ignore multi-line mode for slash commands, and use `esc+Enter` for line break in single-line mode'''
     key_bindings = KeyBindings()
 
     @key_bindings.add(Keys.Enter)
@@ -1044,12 +1043,10 @@ def main():
         local_lang = "en"
     _=set_lang(local_lang)
 
-    # 读取配置文件
     config_ini = ConfigParser()
     config_ini.read(f'{data_dir}/config.ini', encoding='utf-8')
     config = config_ini['DEFAULT']
 
-    # 读取语言配置
     config_lang = config.get("language")
     if config_lang:
         if config_lang in supported_langs:
@@ -1067,7 +1064,6 @@ def main():
     parser.add_argument('--host', metavar='HOST', type=str, help=_("gpt_term.help_host"))
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
-    ## 新添加的选项：--lang
     parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_lang"))
     # normal function args
 
@@ -1076,7 +1072,6 @@ def main():
     parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
     parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
     parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
-    ## 新添加的选项：--set-lang
     parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_set_lang"))
     parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
     parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
@@ -1192,7 +1187,7 @@ def main():
 
     session = PromptSession()
 
-    # 绑定回车事件，达到自定义多行模式的效果
+    # Bind Enter event to achieve custom multi-line mode effect
     key_bindings = create_key_bindings()
 
     while True:
