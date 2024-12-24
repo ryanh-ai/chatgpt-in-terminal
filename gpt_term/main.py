@@ -1096,7 +1096,7 @@ def main():
     parser.add_argument('-v','--version', action='version', version=f'%(prog)s v{local_version}',help=_("gpt_term.help_v"))
     parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
     parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
-    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"), choices=chat_gpt.available_models if chat_gpt.available_models else None)
+    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))
     parser.add_argument('--host', metavar='HOST', type=str, help=_("gpt_term.help_host"))
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
