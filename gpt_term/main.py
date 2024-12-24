@@ -500,9 +500,9 @@ class ChatGPT:
             response = self.send_get(self.models_endpoint)
             if response:
                 models = response.json()["data"]
-                # Filter for chat models only
-                chat_models = {m["id"] for m in models if "chat" in m.get("capabilities", [])}
-                return chat_models
+                # Get all model IDs since capabilities field is not reliable
+                model_ids = {m["id"] for m in models}
+                return model_ids
             return set()
         except Exception as e:
             log.error(f"Failed to fetch models: {str(e)}")
