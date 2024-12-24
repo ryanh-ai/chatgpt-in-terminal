@@ -102,6 +102,8 @@ class ChatGPT:
         self.api_key = api_key
         self.host = "https://api.openai.com"
         self.endpoint = self.host + "/v1/chat/completions"
+        self.models_endpoint = self.host + "/v1/models"
+        self.available_models = self.get_available_models()
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -451,8 +453,11 @@ class ChatGPT:
         #if api_key includes litellm, set endpoint to remove /v1/ from endpoint
         if "litellm" in self.api_key:
             self.endpoint = self.host + "/chat/completions"
+            self.models_endpoint = self.host + "/models"
         else:
             self.endpoint = self.host + "/v1/chat/completions"
+            self.models_endpoint = self.host + "/v1/models"
+        self.available_models = self.get_available_models()
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
@@ -489,12 +494,43 @@ class ChatGPT:
             console.print(_("gpt_term.stream_overflow_no_changed",old_overflow=old_overflow))
         
 
+    def get_available_models(self) -> set:
+        """Fetch available models from the API"""
+        try:
+            response = self.send_get(self.models_endpoint)
+            if response:
+                models = response.json()["data"]
+                # Filter for chat models only
+                chat_models = {m["id"] for m in models if "chat" in m.get("capabilities", [])}
+                # Add known bedrock/anthropic models that may not be in the API response
+                bedrock_models = {
+                    "bedrock/anthropic.claude-v2",
+                    "bedrock/anthropic.claude-v1",
+                    "bedrock/anthropic.claude-instant-v1",
+                    "bedrock/ai21.j2-mid-v1",
+                    "bedrock/ai21.j2-ultra-v1",
+                    "bedrock/amazon.nova-lite-v1:0",
+                    "bedrock/amazon.nova-pro-v1:0",
+                    "bedrock/amazon.nova-micro-v1:0",
+                    "bedrock/cohere.command-text-v14"
+                }
+                return chat_models | bedrock_models
+            return set()
+        except Exception as e:
+            log.error(f"Failed to fetch models: {str(e)}")
+            return set()
+
     def set_model(self, new_model: str):
         old_model = self.model
         if not new_model:
-            console.print(
-                _("gpt_term.model_set"),old_model=old_model)
+            console.print(_("gpt_term.model_set"), old_model=old_model)
             return
+        
+        # Allow setting any model if API didn't return available models
+        if self.available_models and new_model not in self.available_models:
+            console.print(_("gpt_term.model_not_available"))
+            return
+            
         self.model = str(new_model)
         if "gpt-4-1106-preview" in self.model:
             self.tokens_limit = 128000
@@ -1060,7 +1096,7 @@ def main():
     parser.add_argument('-v','--version', action='version', version=f'%(prog)s v{local_version}',help=_("gpt_term.help_v"))
     parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
     parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
-    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))
+    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"), choices=chat_gpt.available_models if chat_gpt.available_models else None)
     parser.add_argument('--host', metavar='HOST', type=str, help=_("gpt_term.help_host"))
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
