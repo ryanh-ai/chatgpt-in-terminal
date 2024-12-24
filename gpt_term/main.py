@@ -571,6 +571,7 @@ class ChatGPT:
         self.temperature = new_temperature
         console.print(_("gpt_term.temperature_set",temperature=temperature))
 
+#AI! please update this so that it gets available models from the `get_available_models` method we've built
 class CommandCompleter(Completer):
     def __init__(self):
         self.nested_completer = NestedCompleter.from_nested_dict({
