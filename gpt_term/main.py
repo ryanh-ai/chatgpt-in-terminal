@@ -503,6 +503,7 @@ class ChatGPT:
                 # Filter for chat models only
                 chat_models = {m["id"] for m in models if "chat" in m.get("capabilities", [])}
                 # Add known bedrock/anthropic models that may not be in the API response
+                # AI! lets not include default models, but only what comes back from the models endpoint
                 bedrock_models = {
                     "bedrock/anthropic.claude-v2",
                     "bedrock/anthropic.claude-v1",
