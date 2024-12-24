@@ -502,20 +502,7 @@ class ChatGPT:
                 models = response.json()["data"]
                 # Filter for chat models only
                 chat_models = {m["id"] for m in models if "chat" in m.get("capabilities", [])}
-                # Add known bedrock/anthropic models that may not be in the API response
-                # AI! lets not include default models, but only what comes back from the models endpoint
-                bedrock_models = {
-                    "bedrock/anthropic.claude-v2",
-                    "bedrock/anthropic.claude-v1",
-                    "bedrock/anthropic.claude-instant-v1",
-                    "bedrock/ai21.j2-mid-v1",
-                    "bedrock/ai21.j2-ultra-v1",
-                    "bedrock/amazon.nova-lite-v1:0",
-                    "bedrock/amazon.nova-pro-v1:0",
-                    "bedrock/amazon.nova-micro-v1:0",
-                    "bedrock/cohere.command-text-v14"
-                }
-                return chat_models | bedrock_models
+                return chat_models
             return set()
         except Exception as e:
             log.error(f"Failed to fetch models: {str(e)}")
