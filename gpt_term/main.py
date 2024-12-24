@@ -596,6 +596,12 @@ class CommandCompleter(Completer):
             '/version': None,
             '/help': None,
             '/exit': None,
+            '/delete': {"first", "all"},
+            '/reset': None,
+            '/lang': {"zh_CN", "en", "jp", "de"},
+            '/version': None,
+            '/help': None,
+            '/exit': None,
         }
         
         # Get available models from ChatGPT instance if it exists
@@ -607,13 +613,6 @@ class CommandCompleter(Completer):
             pass  # Use empty set if chat_gpt not available
             
         self.nested_completer = NestedCompleter.from_nested_dict(command_dict)
-            '/delete': {"first", "all"},
-            '/reset': None,
-            '/lang' : {"zh_CN", "en", "jp", "de"},
-            '/version': None,
-            '/help': None,
-            '/exit': None,
-        })
 
     def path_filter(self, filename):
         # Auto-complete paths, only complete json files and directories
