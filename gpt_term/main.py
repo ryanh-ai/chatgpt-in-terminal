@@ -607,12 +607,6 @@ class CommandCompleter(Completer):
             pass  # Use empty set if chat_gpt not available
             
         self.nested_completer = NestedCompleter.from_nested_dict(command_dict)
-            '/system': None,
-            '/rand': None,
-            '/temperature': None,
-            '/title': None,
-            '/timeout': None,
-            '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
             '/lang' : {"zh_CN", "en", "jp", "de"},
