@@ -185,6 +185,7 @@ class ChatGPT:
     def process_stream_response(self, response: requests.Response):
         reply: str = ""
         client = sseclient.SSEClient(response)
+        final_chunk = None  # Store the final chunk
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]AI: ")
@@ -200,14 +201,15 @@ class ChatGPT:
                             rprint(content, end="", flush=True),
                         else:
                             live.update(Markdown(reply), refresh=True)
+                    final_chunk = part  # Keep track of the final chunk
             except KeyboardInterrupt:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
             finally:
                 reply_message = {'role': 'assistant', 'content': reply}
-                # Check for citations in the response
-                if "citations" in part:
-                    reply_message["citations"] = part["citations"]
+                # Check for citations in the final chunk at parent level
+                if final_chunk and "citations" in final_chunk:
+                    reply_message["citations"] = final_chunk["citations"]
                 return reply_message
 
     def process_response(self, response: requests.Response):
