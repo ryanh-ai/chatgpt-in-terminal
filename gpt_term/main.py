@@ -213,6 +213,11 @@ class ChatGPT:
             response_json = response.json()
             log.debug(f"Response: {response_json}")
             reply_message: Dict[str, str] = response_json["choices"][0]["message"]
+            
+            # Check for citations in the response
+            if "citations" in response_json["choices"][0]:
+                reply_message["citations"] = response_json["choices"][0]["citations"]
+            
             print_message(reply_message)
             return reply_message
 
@@ -652,6 +657,13 @@ class FloatRangeValidator(Validator):
         
 temperature_validator = FloatRangeValidator(min_value=0.0, max_value=2.0)
 
+def print_citations(citations: List[str]):
+    if not citations:
+        return
+    console.print("\nCitations:")
+    for i, citation in enumerate(citations, 1):
+        console.print(f"[{i}] {citation}")
+
 def print_message(message: Dict[str, str]):
     role = message["role"]
     content = message["content"]
@@ -664,6 +676,8 @@ def print_message(message: Dict[str, str]):
             print(content)
         else:
             console.print(Markdown(content), new_line_start=True)
+        if "citations" in message:
+            print_citations(message["citations"])
 
 
 def copy_code(message: Dict[str, str], select_code_idx: int = None):
