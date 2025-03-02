@@ -186,6 +186,7 @@ class ChatGPT:
         reply: str = ""
         client = sseclient.SSEClient(response)
         final_chunk = None  # Store the final chunk
+        citations = None
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]AI: ")
@@ -194,22 +195,25 @@ class ChatGPT:
                         # finish_reason = part["choices"][0]['finish_reason']
                         break
                     part = json.loads(event.data)
+                    if 'citations' in part:
+                        citations = part['citations']
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         reply += content
                         if ChatMode.raw_mode:
                             rprint(content, end="", flush=True),
                         else:
-                            live.update(Markdown(reply), refresh=True)
+                            if citations:
+                                reply_full = reply + format_citations(citations)
+                            else:
+                                reply_full = reply
+                            live.update(Markdown(reply_full), refresh=True)
                     final_chunk = part  # Keep track of the final chunk
             except KeyboardInterrupt:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
             finally:
                 reply_message = {'role': 'assistant', 'content': reply}
-                # Check for citations in the final chunk at parent level
-                if final_chunk and "citations" in final_chunk:
-                    reply_message["citations"] = final_chunk["citations"]
                 return reply_message
 
     def process_response(self, response: requests.Response):
@@ -669,6 +673,14 @@ def print_citations(citations: List[str]):
     console.print("\nCitations:")
     for i, citation in enumerate(citations, 1):
         console.print(f"[{i}] {citation}")
+
+def format_citations(citations: List[str]):
+    if not citations:
+        return ""
+    citation_text = "\n\nCitations:"
+    for i, citation in enumerate(citations, 1):
+        citation_text += f"\n\n[{i}] {citation}"
+    return citation_text
 
 def print_message(message: Dict[str, str]):
     role = message["role"]
