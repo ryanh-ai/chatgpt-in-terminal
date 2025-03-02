@@ -204,7 +204,11 @@ class ChatGPT:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
             finally:
-                return {'role': 'assistant', 'content': reply}
+                reply_message = {'role': 'assistant', 'content': reply}
+                # Check for citations in the response
+                if "citations" in part:
+                    reply_message["citations"] = part["citations"]
+                return reply_message
 
     def process_response(self, response: requests.Response):
         if ChatMode.stream_mode:
