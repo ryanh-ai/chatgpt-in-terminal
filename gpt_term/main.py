@@ -215,8 +215,8 @@ class ChatGPT:
             reply_message: Dict[str, str] = response_json["choices"][0]["message"]
             
             # Check for citations in the response
-            if "citations" in response_json["choices"][0]:
-                reply_message["citations"] = response_json["choices"][0]["citations"]
+            if "citations" in response_json:
+                reply_message["citations"] = response_json["citations"]
             
             print_message(reply_message)
             return reply_message
