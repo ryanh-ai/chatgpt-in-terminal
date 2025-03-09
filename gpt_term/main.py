@@ -240,7 +240,7 @@ class ChatGPT:
                                 rprint(reasoning_content, end="", style="yellow", flush=True)
                             else:
                                 # Ensure the thinking content is displayed with proper styling
-                                live.update(Markdown(thinking_content), style="yellow", refresh=True)
+                                live.update(Markdown(thinking_content), refresh=True)
                         
                         # Process regular content
                         elif "content" in delta and delta["content"]:
