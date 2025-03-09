@@ -213,9 +213,11 @@ class ChatGPT:
                         thinking_content += current_chunk
                         
                         if ChatMode.raw_mode:
-                            rprint(current_chunk, end="", style="dim yellow", flush=True)
+                            # Use brighter yellow for better visibility
+                            rprint(current_chunk, end="", style="yellow", flush=True)
                         else:
-                            live.update(Markdown(thinking_content), style="dim yellow", refresh=True)
+                            # Ensure the thinking content is displayed with proper styling
+                            live.update(Markdown(thinking_content), style="yellow", refresh=True)
                     
                     elif "content" in part["choices"][0]["delta"]:
                         # If we were displaying thinking content and now we have regular content,
@@ -223,6 +225,10 @@ class ChatGPT:
                         if is_thinking_mode:
                             is_thinking_mode = False
                             rprint("[bold yellow]</thinking>")
+                            
+                            # Add a newline to separate thinking from regular content
+                            if ChatMode.raw_mode:
+                                rprint("\n")
                         
                         content = part["choices"][0]["delta"]["content"]
                         reply += content
@@ -242,6 +248,8 @@ class ChatGPT:
                 # Close thinking tag if we're still in thinking mode at the end
                 if is_thinking_mode:
                     rprint("[bold yellow]</thinking>")
+                    if ChatMode.raw_mode:
+                        rprint("\n")  # Add newline after closing tag
                     
                 reply_message = {'role': 'assistant', 'content': reply}
             
