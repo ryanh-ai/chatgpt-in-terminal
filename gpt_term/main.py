@@ -251,7 +251,7 @@ class ChatGPT:
                             content = delta["content"]
                             
                             # Replace <thought> and </thought> markers for specific models
-                            if "sonar-reasoning-pro" in chat_gpt.model or "deepseek-r1" in chat_gpt.model:
+                            if "sonar-reasoning-pro" in self.model or "deepseek-r1" in self.model:
                                 content = content.replace("<thought>", "> Thought Process:\n```thinking\n")
                                 content = content.replace("</thought>", "\n```\n\n> AI Response:  \n\n")
                             
