@@ -198,52 +198,82 @@ class ChatGPT:
                     if event.data == '[DONE]':
                         # finish_reason = part["choices"][0]['finish_reason']
                         break
+                    
                     part = json.loads(event.data)
+                    log.debug(f"Stream chunk: {json.dumps(part)}")
+                    
                     if 'citations' in part:
                         citations = part['citations']
                     
-                    # Handle thinking content in streaming mode
-                    if "reasoning_content" in part["choices"][0]["delta"]:
-                        # If this is the first reasoning content chunk, print opening thinking tag
-                        if not is_thinking_mode:
-                            is_thinking_mode = True
-                            rprint("[bold yellow]<thinking>")
-                            
-                        current_chunk = part["choices"][0]["delta"]["reasoning_content"]
-                        thinking_content += current_chunk
+                    # Handle thinking content in streaming mode - more robust checking
+                    if "choices" in part and len(part["choices"]) > 0 and "delta" in part["choices"][0]:
+                        delta = part["choices"][0]["delta"]
                         
-                        if ChatMode.raw_mode:
-                            # Use brighter yellow for better visibility
-                            rprint(current_chunk, end="", style="yellow", flush=True)
-                        else:
-                            # Ensure the thinking content is displayed with proper styling
-                            live.update(Markdown(thinking_content), style="yellow", refresh=True)
-                    
-                    elif "content" in part["choices"][0]["delta"]:
-                        # If we were displaying thinking content and now we have regular content,
-                        # close the thinking tag first
-                        if is_thinking_mode:
-                            is_thinking_mode = False
-                            rprint("[bold yellow]</thinking>")
+                        # Try different paths where reasoning content might be found
+                        reasoning_content = None
+                        
+                        # Direct path
+                        if "reasoning_content" in delta:
+                            reasoning_content = delta["reasoning_content"]
+                        # Check in thinking_blocks
+                        elif "thinking_blocks" in delta and delta["thinking_blocks"]:
+                            for block in delta["thinking_blocks"]:
+                                if block.get("type") == "thinking" and "thinking" in block:
+                                    reasoning_content = block["thinking"]
+                                    break
+                        # Check in provider_specific_fields
+                        elif "provider_specific_fields" in delta and "reasoningContent" in delta["provider_specific_fields"]:
+                            if "text" in delta["provider_specific_fields"]["reasoningContent"]:
+                                reasoning_content = delta["provider_specific_fields"]["reasoningContent"]["text"]
+                        
+                        # If we found reasoning content through any path
+                        if reasoning_content:
+                            # If this is the first reasoning content chunk, print opening thinking tag
+                            if not is_thinking_mode:
+                                is_thinking_mode = True
+                                rprint("[bold yellow]<thinking>")
+                                
+                            thinking_content += reasoning_content
                             
-                            # Add a newline to separate thinking from regular content
                             if ChatMode.raw_mode:
-                                rprint("\n")
-                        
-                        content = part["choices"][0]["delta"]["content"]
-                        reply += content
-                        if ChatMode.raw_mode:
-                            rprint(content, end="", flush=True)
-                        else:
-                            if citations:
-                                reply_full = reply + format_citations(citations)
+                                # Use brighter yellow for better visibility
+                                rprint(reasoning_content, end="", style="yellow", flush=True)
                             else:
-                                reply_full = reply
-                            live.update(Markdown(reply_full), refresh=True)
+                                # Ensure the thinking content is displayed with proper styling
+                                live.update(Markdown(thinking_content), style="yellow", refresh=True)
+                        
+                        # Process regular content
+                        elif "content" in delta and delta["content"]:
+                            # If we were displaying thinking content and now we have regular content,
+                            # close the thinking tag first
+                            if is_thinking_mode:
+                                is_thinking_mode = False
+                                rprint("[bold yellow]</thinking>")
+                                
+                                # Add a newline to separate thinking from regular content
+                                if ChatMode.raw_mode:
+                                    rprint("\n")
+                            
+                            content = delta["content"]
+                            reply += content
+                            if ChatMode.raw_mode:
+                                rprint(content, end="", flush=True)
+                            else:
+                                if citations:
+                                    reply_full = reply + format_citations(citations)
+                                else:
+                                    reply_full = reply
+                                live.update(Markdown(reply_full), refresh=True)
+                    
                     final_chunk = part  # Keep track of the final chunk
             except KeyboardInterrupt:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
+            except Exception as e:
+                # Log any exceptions to help debug
+                log.error(f"Error in process_stream_response: {str(e)}")
+                live.stop()
+                console.print(f"[red]Error processing response: {str(e)}[/red]")
             finally:
                 # Close thinking tag if we're still in thinking mode at the end
                 if is_thinking_mode:
