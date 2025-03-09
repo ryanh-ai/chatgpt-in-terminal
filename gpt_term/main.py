@@ -107,6 +107,7 @@ class ChatGPT:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
+        self.thinking_mode = None  # None when disabled, int value for token budget when enabled
         self.messages = [
             {"role": "system", "content": f"You are a helpful assistant.\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"}]
         self.model = 'gpt-3.5-turbo'
@@ -187,6 +188,7 @@ class ChatGPT:
         client = sseclient.SSEClient(response)
         final_chunk = None  # Store the final chunk
         citations = None
+        thinking_content = None
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]AI: ")
@@ -197,6 +199,13 @@ class ChatGPT:
                     part = json.loads(event.data)
                     if 'citations' in part:
                         citations = part['citations']
+                    
+                    # Handle thinking content in streaming mode
+                    if "thinking" in part:
+                        thinking_content = part["thinking"]
+                        log.debug(f"Thinking content received: {thinking_content}")
+                        console.print("\n[dim italic]Thinking...[/dim italic]")
+                    
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         reply += content
@@ -214,6 +223,12 @@ class ChatGPT:
                 console.print(_('gpt_term.Aborted'))
             finally:
                 reply_message = {'role': 'assistant', 'content': reply}
+            
+                # If thinking content was captured, add it to the reply message
+                if thinking_content:
+                    reply_message['thinking'] = thinking_content
+                    console.print("\n[dim]Thinking content captured.[/dim]")
+                
                 return reply_message
 
     def process_response(self, response: requests.Response):
@@ -227,6 +242,11 @@ class ChatGPT:
             # Check for citations in the response
             if "citations" in response_json:
                 reply_message["citations"] = response_json["citations"]
+            
+            # Check for thinking content in non-stream mode
+            if "thinking" in response_json:
+                reply_message["thinking"] = response_json["thinking"]
+                console.print("[dim italic]Thinking content captured in response.[/dim italic]")
             
             print_message(reply_message)
             return reply_message
@@ -282,6 +302,14 @@ class ChatGPT:
                 "stream": ChatMode.stream_mode,
                 "temperature": self.temperature
             }
+            
+            # Add thinking mode parameters only for supported Claude 3.7 Sonnet models
+            if self.thinking_mode is not None and "bedrock/anthropic.claude-3-7-sonnet" in self.model:
+                data["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": self.thinking_mode
+                }
+                
             if 'bedrock/anthropic' or 'bedrock/amazon' or "anthropic/" in self.model:
                 data['max_tokens'] = self.max_tokens_sampled
             response = self.send_request(data)
@@ -604,6 +632,7 @@ class CommandCompleter(Completer):
             '/system': None,
             '/rand': None,
             '/temperature': None,
+            '/thinking': {"off", "disable", "2048", "4096", "8192"},
             '/title': None,
             '/timeout': None,
             '/undo': None,
@@ -696,6 +725,12 @@ def print_message(message: Dict[str, str]):
             console.print(Markdown(content), new_line_start=True)
         if "citations" in message:
             print_citations(message["citations"])
+        if "thinking" in message:
+            console.print("[dim italic]Thinking:[/dim italic]")
+            console.print(Panel(Markdown(message["thinking"]), 
+                                title="[dim]Thinking Process[/dim]", 
+                                border_style="dim", 
+                                width=100))
 
 
 def copy_code(message: Dict[str, str], select_code_idx: int = None):
@@ -780,6 +815,39 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         ChatMode.toggle_raw_mode()
     elif command == '/multi':
         ChatMode.toggle_multi_line_mode()
+    elif command.startswith('/thinking'):
+        args = command.split()
+        
+        # Check if the model supports thinking mode
+        is_supported_model = ("bedrock/anthropic.claude-3-7-sonnet" in chat_gpt.model)
+        
+        if not is_supported_model:
+            console.print("Thinking mode is only supported with Bedrock Claude 3.7 Sonnet models.", style="yellow")
+            console.print("Supported models include: bedrock/anthropic.claude-3-7-sonnet-*", style="yellow")
+            return
+            
+        # Parse arguments
+        if len(args) > 1:
+            try:
+                budget = int(args[1])
+                chat_gpt.thinking_mode = budget
+                console.print(f"Thinking mode enabled with budget of {budget} tokens.", style="green")
+            except ValueError:
+                if args[1].lower() in ["off", "disable", "disabled", "false", "no"]:
+                    chat_gpt.thinking_mode = None
+                    console.print("Thinking mode disabled.", style="yellow")
+                else:
+                    # Default to 2048 if not a valid number
+                    chat_gpt.thinking_mode = 2048
+                    console.print("Thinking mode enabled with default budget of 2048 tokens.", style="green")
+        else:
+            # Toggle thinking mode
+            if chat_gpt.thinking_mode is None:
+                chat_gpt.thinking_mode = 2048  # Default budget
+                console.print("Thinking mode enabled with default budget of 2048 tokens.", style="green")
+            else:
+                chat_gpt.thinking_mode = None
+                console.print("Thinking mode disabled.", style="yellow")
 
     elif command.startswith('/stream'):
         args = command.split()
@@ -960,7 +1028,9 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         raise EOFError
 
     elif command == '/help':
-        console.print(_("gpt_term.help_text"))
+        help_text = _("""gpt_term.help_text""")
+        help_text += "\n/thinking [budget]: Toggle thinking mode for Bedrock Claude 3.7 Sonnet models (default: 2048 tokens)"
+        console.print(help_text)
         
     else:
         set_command = set(command)
