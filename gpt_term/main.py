@@ -240,7 +240,7 @@ class ChatGPT:
                                 rprint(reasoning_content, end="", style="yellow", flush=True)
                             else:
                                 # Ensure the thinking content is displayed with proper styling
-                                live.update(Markdown(thinking_content), refresh=True)
+                                live.update(Markdown(f"[yellow]{thinking_content}[/yellow]"), refresh=True)
                         
                         # Process regular content
                         elif "content" in delta and delta["content"]:
@@ -249,10 +249,7 @@ class ChatGPT:
                             if is_thinking_mode:
                                 is_thinking_mode = False
                                 rprint("[bold yellow]</thinking>")
-                                
-                                # Add a newline to separate thinking from regular content
-                                if ChatMode.raw_mode:
-                                    rprint("\n")
+                                rprint("")  # Add an empty line for better separation
                             
                             content = delta["content"]
                             reply += content
@@ -277,16 +274,16 @@ class ChatGPT:
             finally:
                 # Close thinking tag if we're still in thinking mode at the end
                 if is_thinking_mode:
+                    is_thinking_mode = False
                     rprint("[bold yellow]</thinking>")
-                    if ChatMode.raw_mode:
-                        rprint("\n")  # Add newline after closing tag
+                    rprint("")  # Add an empty line for better separation
                     
                 reply_message = {'role': 'assistant', 'content': reply}
             
                 # If thinking content was captured, add it to the reply message
                 if thinking_content:
                     reply_message['thinking'] = thinking_content
-                    console.print("\n[dim]Thinking content captured.[/dim]")
+                    console.print("[dim]Thinking content captured.[/dim]")
                 
                 return reply_message
 
