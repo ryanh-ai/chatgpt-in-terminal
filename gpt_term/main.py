@@ -189,6 +189,8 @@ class ChatGPT:
         final_chunk = None  # Store the final chunk
         citations = None
         thinking_content = ""
+        is_thinking_mode = False  # Track if we're currently displaying thinking content
+        
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]AI: ")
@@ -201,23 +203,31 @@ class ChatGPT:
                         citations = part['citations']
                     
                     # Handle thinking content in streaming mode
-                    #AI!, please ensure the overall reasoning content is wrapped in <thinking> tag when and
-                    # and don't ever mix reasoning and non reasoning content in the print out
-                    # please don't chagne the overall structure of this as it works, just help me track and
-                    # add the thinking tags
                     if "reasoning_content" in part["choices"][0]["delta"]:
-                        thinking_content = part["choices"][0]["delta"]["reasoning_content"]
-                        reply += thinking_content
+                        # If this is the first reasoning content chunk, print opening thinking tag
+                        if not is_thinking_mode:
+                            is_thinking_mode = True
+                            rprint("[bold yellow]<thinking>")
+                            
+                        current_chunk = part["choices"][0]["delta"]["reasoning_content"]
+                        thinking_content += current_chunk
+                        
                         if ChatMode.raw_mode:
-                            rprint(thinking_content, end="", flush=True)
+                            rprint(current_chunk, end="", style="dim yellow", flush=True)
                         else:
-                            live.update(Markdown(reply), refresh=True)
+                            live.update(Markdown(thinking_content), style="dim yellow", refresh=True)
                     
-                    if "content" in part["choices"][0]["delta"]:
+                    elif "content" in part["choices"][0]["delta"]:
+                        # If we were displaying thinking content and now we have regular content,
+                        # close the thinking tag first
+                        if is_thinking_mode:
+                            is_thinking_mode = False
+                            rprint("[bold yellow]</thinking>")
+                        
                         content = part["choices"][0]["delta"]["content"]
                         reply += content
                         if ChatMode.raw_mode:
-                            rprint(content, end="", flush=True),
+                            rprint(content, end="", flush=True)
                         else:
                             if citations:
                                 reply_full = reply + format_citations(citations)
@@ -229,6 +239,10 @@ class ChatGPT:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
             finally:
+                # Close thinking tag if we're still in thinking mode at the end
+                if is_thinking_mode:
+                    rprint("[bold yellow]</thinking>")
+                    
                 reply_message = {'role': 'assistant', 'content': reply}
             
                 # If thinking content was captured, add it to the reply message
