@@ -190,6 +190,7 @@ class ChatGPT:
         citations = None
         thinking_content = ""
         is_thinking_mode = False  # Track if we're currently displaying thinking content
+        is_thinking_complete = False
         
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
@@ -213,7 +214,7 @@ class ChatGPT:
                         reasoning_content = None
                         
                         # Direct path
-                        if "reasoning_content" in delta:
+                        if "reasoning_content" in delta and delta["reasoning_content"]:
                             reasoning_content = delta["reasoning_content"]
                         # Check in thinking_blocks
                         elif "thinking_blocks" in delta and delta["thinking_blocks"]:
@@ -227,11 +228,11 @@ class ChatGPT:
                                 reasoning_content = delta["provider_specific_fields"]["reasoningContent"]["text"]
                         
                         # If we found reasoning content through any path
-                        if reasoning_content:
+                        if reasoning_content and not is_thinking_complete:
                             # If this is the first reasoning content chunk, print opening thinking tag
                             if not is_thinking_mode:
                                 is_thinking_mode = True
-                                rprint("[bold yellow]<thinking>")
+                                thinking_content = "> Thought Process:\n```thinking\n"
                                 
                             thinking_content += reasoning_content
                             
@@ -240,17 +241,21 @@ class ChatGPT:
                                 rprint(reasoning_content, end="", style="yellow", flush=True)
                             else:
                                 # Ensure the thinking content is displayed with proper styling
-                                live.update(Markdown(f"[yellow]{thinking_content}[/yellow]"), refresh=True)
+                                live.update(Markdown(f"{thinking_content}"), refresh=True)
                         
                         # Process regular content
-                        elif "content" in delta and delta["content"]:
+                        if "content" in delta and delta['content']:
+                            log.debug(f"Delta Content: {delta['content']}")
+                            log.debug(f"Thinking Content: {thinking_content}")
                             # If we were displaying thinking content and now we have regular content,
                             # close the thinking tag first
-                            if is_thinking_mode:
+                            if is_thinking_mode and not is_thinking_complete:
                                 is_thinking_mode = False
-                                rprint("[bold yellow]</thinking>")
-                                rprint("")  # Add an empty line for better separation
-                            
+                                thinking_content += "\n```\n\n"
+                                is_thinking_complete = True
+                                reply += f"{thinking_content}\n> AI Response:  \n\n"
+                                log.debug("Thinking Completed")
+
                             content = delta["content"]
                             reply += content
                             if ChatMode.raw_mode:
@@ -260,6 +265,7 @@ class ChatGPT:
                                     reply_full = reply + format_citations(citations)
                                 else:
                                     reply_full = reply
+                                log.debug(f"Reply Full: {reply_full}")
                                 live.update(Markdown(reply_full), refresh=True)
                     
                     final_chunk = part  # Keep track of the final chunk
@@ -267,23 +273,11 @@ class ChatGPT:
                 live.stop()
                 console.print(_('gpt_term.Aborted'))
             except Exception as e:
-                # Log any exceptions to help debug
-                log.error(f"Error in process_stream_response: {str(e)}")
                 live.stop()
-                console.print(f"[red]Error processing response: {str(e)}[/red]")
+                log.debug(f"Exception: {e}")
+                rprint(f"[red]Error processing response: {str(e)}[/red]")
             finally:
-                # Close thinking tag if we're still in thinking mode at the end
-                if is_thinking_mode:
-                    is_thinking_mode = False
-                    rprint("[bold yellow]</thinking>")
-                    rprint("")  # Add an empty line for better separation
-                    
                 reply_message = {'role': 'assistant', 'content': reply}
-            
-                # If thinking content was captured, add it to the reply message
-                if thinking_content:
-                    reply_message['thinking'] = thinking_content
-                    console.print("[dim]Thinking content captured.[/dim]")
                 
                 return reply_message
 
@@ -762,9 +756,9 @@ def print_citations(citations: List[str]):
 def format_citations(citations: List[str]):
     if not citations:
         return ""
-    citation_text = "\n\nCitations:"
+    citation_text = "\n\nCitations:  \n"
     for i, citation in enumerate(citations, 1):
-        citation_text += f"\n\n[{i}] {citation}"
+        citation_text += f"[{i}] {citation}  \n"
     return citation_text
 
 def print_message(message: Dict[str, str]):
