@@ -250,10 +250,10 @@ class ChatGPT:
                             
                             content = delta["content"]
                             
-                            # Replace <thought> and </thought> markers for specific models
+                            # Replace <think> and </think> markers for specific models
                             if "sonar-reasoning-pro" in self.model or "deepseek-r1" in self.model:
-                                content = content.replace("<thought>", "> Thought Process:\n```thinking\n")
-                                content = content.replace("</thought>", "\n```\n\n> AI Response:  \n\n")
+                                content = content.replace("<think>", "> Thought Process:\n```thinking\n")
+                                content = content.replace("</think>", "\n```\n\n> AI Response:  \n\n")
                             
                             # If we were displaying thinking content and now we have regular content,
                             # close the thinking tag first
@@ -267,6 +267,7 @@ class ChatGPT:
                             if ChatMode.raw_mode:
                                 rprint(content, end="", flush=True)
                             else:
+                                #TODO: change citations to print only at the end
                                 if citations:
                                     reply_full = reply + format_citations(citations)
                                 else:
