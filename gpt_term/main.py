@@ -244,6 +244,10 @@ class ChatGPT:
                                 live.update(Markdown(f"{thinking_content}"), refresh=True)
                         
                         # Process regular content
+                        #AI!, I would like to replace `<thought>` with "> Thought Process:\n```thinking\n"
+                        #     and `</thought>` with "\n```\n\n> AI Response:  \n\n"
+                        # Please only make this replacement when the model contains sonar-reasoning-pro or
+                        # deepseek-r1
                         if "content" in delta and delta['content']:
                             log.debug(f"Delta Content: {delta['content']}")
                             log.debug(f"Thinking Content: {thinking_content}")
@@ -656,7 +660,7 @@ class ChatGPT:
         except ValueError:
             console.print(_("gpt_term.temperature_must_between"))
             return
-        if new_temperature > 2 or new_temperature < 0:
+        if new_temperature > 1 or new_temperature < 0:
             console.print(_("gpt_term.temperature_must_between"))
             return
         self.temperature = new_temperature
