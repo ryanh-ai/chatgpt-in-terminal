@@ -244,13 +244,17 @@ class ChatGPT:
                                 live.update(Markdown(f"{thinking_content}"), refresh=True)
                         
                         # Process regular content
-                        #AI!, I would like to replace `<thought>` with "> Thought Process:\n```thinking\n"
-                        #     and `</thought>` with "\n```\n\n> AI Response:  \n\n"
-                        # Please only make this replacement when the model contains sonar-reasoning-pro or
-                        # deepseek-r1
                         if "content" in delta and delta['content']:
                             log.debug(f"Delta Content: {delta['content']}")
                             log.debug(f"Thinking Content: {thinking_content}")
+                            
+                            content = delta["content"]
+                            
+                            # Replace <thought> and </thought> markers for specific models
+                            if "sonar-reasoning-pro" in chat_gpt.model or "deepseek-r1" in chat_gpt.model:
+                                content = content.replace("<thought>", "> Thought Process:\n```thinking\n")
+                                content = content.replace("</thought>", "\n```\n\n> AI Response:  \n\n")
+                            
                             # If we were displaying thinking content and now we have regular content,
                             # close the thinking tag first
                             if is_thinking_mode and not is_thinking_complete:
@@ -259,8 +263,6 @@ class ChatGPT:
                                 is_thinking_complete = True
                                 reply += f"{thinking_content}\n> AI Response:  \n\n"
                                 log.debug("Thinking Completed")
-
-                            content = delta["content"]
                             reply += content
                             if ChatMode.raw_mode:
                                 rprint(content, end="", flush=True)
