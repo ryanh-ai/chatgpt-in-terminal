@@ -188,7 +188,7 @@ class ChatGPT:
         client = sseclient.SSEClient(response)
         final_chunk = None  # Store the final chunk
         citations = None
-        thinking_content = None
+        thinking_content = ""
         with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]AI: ")
@@ -201,10 +201,17 @@ class ChatGPT:
                         citations = part['citations']
                     
                     # Handle thinking content in streaming mode
-                    if "thinking" in part:
-                        thinking_content = part["thinking"]
-                        log.debug(f"Thinking content received: {thinking_content}")
-                        console.print("\n[dim italic]Thinking...[/dim italic]")
+                    #AI!, please ensure the overall reasoning content is wrapped in <thinking> tag when and
+                    # and don't ever mix reasoning and non reasoning content in the print out
+                    # please don't chagne the overall structure of this as it works, just help me track and
+                    # add the thinking tags
+                    if "reasoning_content" in part["choices"][0]["delta"]:
+                        thinking_content = part["choices"][0]["delta"]["reasoning_content"]
+                        reply += thinking_content
+                        if ChatMode.raw_mode:
+                            rprint(thinking_content, end="", flush=True)
+                        else:
+                            live.update(Markdown(reply), refresh=True)
                     
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
