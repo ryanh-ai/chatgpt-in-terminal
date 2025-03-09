@@ -763,7 +763,7 @@ def print_citations(citations: List[str]):
 def format_citations(citations: List[str]):
     if not citations:
         return ""
-    citation_text = "\n\nCitations:  \n"
+    citation_text = "\n\n> Citations:  \n\n"
     for i, citation in enumerate(citations, 1):
         citation_text += f"[{i}] {citation}  \n"
     return citation_text
