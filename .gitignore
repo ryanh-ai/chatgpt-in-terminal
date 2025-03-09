@@ -11,3 +11,5 @@ build
 *.egg-info/
 dist
 gpt_term/_version.py
+.aider*
+.env
